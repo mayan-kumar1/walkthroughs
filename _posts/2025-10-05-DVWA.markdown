@@ -21,6 +21,8 @@ For this walkthrough we will utlize Metasploitable 2 instance which ships with a
 * Login in to dvwa using credentials `admin:password`.
 * Go to Setup, and use Create/Reset Database
 
+![Metasploitable 2 with dvwa](/assets/img/dvwa-metasploitable.png){: .shadow }
+
 ## Challenge 1: Brute Force Attacks
 
 ### What is a Brute-Force Attack?
