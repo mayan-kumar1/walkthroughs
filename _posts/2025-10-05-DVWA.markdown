@@ -1,0 +1,111 @@
+---
+title: DVWA
+date: 2025-10-05 00:12:12 +0530
+categories: [CTFs, DVWA]
+tags: [dvwa]     # TAG names should always be lowercase
+description: Damn Vulnerable Web Application Walkthrough.
+
+---
+
+# A Step-by-Step Guide to the DVWA Brute Force Module
+
+Welcome to this walkthrough for the Brute Force module in the Damn Vulnerable Web Application (DVWA). This guide is for educational purposes to help you understand how brute-force attacks work and, more importantly, how to defend against them. We will explore each difficulty level from Low to Impossible.
+
+## Setup
+
+For this walkthrough we will utlize Metasploitable 2 instance which ships with a DVWA instance
+* Start the metasploitable 2 instance.
+* Login using credentials `msfadmin:msfadmin`.
+* check the ip address of the system using `ifconfig`.
+* Uisng your kali linux instance, go the IP of metasploitable and choose dvwa.
+* Login in to dvwa using credentials `admin:password`.
+* Go to Setup, and use Create/Reset Database
+
+## Challenge 1: Brute Force Attacks
+
+### What is a Brute-Force Attack?
+
+A brute-force attack is a trial-and-error method used to obtain information such as a username or password. The attacker systematically tries all possible combinations of characters until the correct one is found. In the context of a web login form, this involves using a list of common usernames and passwords (a wordlist) to guess the credentials.
+
+### Preparation
+
+Prepare our own wordlist for password for easy bruteforcing
+```shell
+123456
+12345
+123456789
+password
+iloveyou
+princess
+1234567
+rockyou
+12345678
+abc123
+```
+{: file="passwords.txt" }
+
+Let's begin!
+
+---
+
+### Level: Low
+
+At the Low security level, the application has **zero protection** against brute-force attacks. The server-side code simply takes the user's input and checks it against the database. There is no rate limiting, no account lockout, and no other mechanism to slow down or stop repeated login attempts.
+
+An attacker can send thousands of requests per minute without any penalty.
+
+
+We will use the command-line tool **Hydra** to automate the password guessing process.
+
+**Step 1: Analyze the Login Form**
+Launch Burp Suite and proxy all trafic through it.
+
+First, navigate to the DVWA Brute Force page. Enter any random username and password (e.g., `admin` / `12345`) and click "Login".You will see that it's a `GET` request.
+
+The URL will look something like this:
+`http://192.168.202.148/dvwa/vulnerabilities/brute/?username=admin&password=12345&Login=Login#`
+
+Also, note the error message on the page for a failed login: "**Username and/or password incorrect.**"
+
+![Brute Force Login Error](/assets/img/dvwa-brute-login-failed.png){: .shadow }
+![Brute Force Login Error](/assets/img/dvwa-brute-burp.png){: .shadow }
+
+
+**Step 2: Construct the Hydra Command**
+
+```bash
+hydra 192.168.202.148 http-form-get "/dvwa/vulnerabilities/brute/:username=admin&password=^PASS^&Login=Login:H=Cookie:PHPSESSID=e6c27aacd3395aa1fce72b6655dc2a35; security=low:F=Username and/or password incorrect." -l admin -P password.txt
+```
+* Change the IP address.
+* Change the PHPSESSIP cookie by looking at the burp request.
+
+![Brute Force Low Command](/assets/img/dvwa-brute-low-cmd.png){: .shadow }
+
+### Level: Medium
+
+**To Change difficulty, just change the security cookie. Like `security=medium`**
+
+The medium security level in the DVWA's brute-force module introduces a rudimentary, yet effective, defense mechanism: a sleep() function. This function intentionally pauses the execution of the script for a short duration after each failed login attempt.
+
+Still we can use the same hydra tool with same syntax, just change the cookie `security=medium`. The only diffrence you will observe is that the script will take little bit more time to finish the attack.
+
+```bash
+hydra 192.168.202.148 http-form-get "/dvwa/vulnerabilities/brute/:username=admin&password=^PASS^&Login=Login:H=Cookie:PHPSESSID=e6c27aacd3395aa1fce72b6655dc2a35; security=medium:F=Username and/or password incorrect." -l admin -P password.txt
+```
+![Brute Force Medium Command](/assets/img/dvwa-brute-medium-cmd.png){: .shadow }
+
+### Level: Hard
+
+Here again, the attack will be much slower but the same command will work fine. Just change the security cookie to `security=hard`
+
+```bash
+hydra 192.168.202.148 http-form-get "/dvwa/vulnerabilities/brute/:username=admin&password=^PASS^&Login=Login:H=Cookie:PHPSESSID=e6c27aacd3395aa1fce72b6655dc2a35; security=hard:F=Username and/or password incorrect." -l admin -P password.txt
+```
+![Brute Force Hard Command](/assets/img/dvwa-brute-hard-cmd.png){: .shadow }
+
+### Conclusion
+
+Using the above attacks we identifed the corrent `admin` password as `password`
+![Brute Force Hard Command](/assets/img/dvwa-brute-login-success.png){: .shadow }
+
+## Challenge 2: Command Execution
