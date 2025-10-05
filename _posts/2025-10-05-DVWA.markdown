@@ -108,4 +108,4 @@ hydra 192.168.202.148 http-form-get "/dvwa/vulnerabilities/brute/:username=admin
 Using the above attacks we identifed the corrent `admin` password as `password`
 ![Brute Force Hard Command](/assets/img/dvwa-brute-login-success.png){: .shadow }
 
-## Challenge 2: Command Execution
+## Challenge 2: Cmd Execution
